@@ -3,33 +3,35 @@
 HoloRay is a C++ implementation of a **subpixel boundary refinement and area
 estimation** module for closed contours on bitmap images.
 
-The current version is implemented and tested with **Visual Studio 2015**
-and uses a third-party KD-tree library for neighborhood queries.  
-Porting to other compilers / environments should be possible by adjusting
-project settings, but has not been tested.
+- Implemented and tested with **Visual Studio 2015**.
+- Uses an external **holomorphic 1-form / integration chart** solver as input.
+- Includes a third-party **KD-tree** implementation by Matthew B. Kennel.
+
+This repository only releases the **HoloRay layer** (starting from precomputed
+integration charts). The underlying holomorphic 1-form solver (e.g. based on
+the Gu–Yau / Xianfeng Gu framework) is treated as an external dependency and
+is **not** included here.
 
 ---
 
 ## 1. Repository layout
 
-HoloRay uses the following project structure:
+    HoloRay.sln          # Visual Studio 2015 solution
 
-    HoloRay.sln            # Visual Studio 2015 solution
-
-    HoloRay/               # Main project
-      data/                # Test data (images / boundaries / configs, etc.)
-      KdTree/              # Third-party KD-tree implementation
-      Parser/              # Simple parsers and small utilities
-      Algo.h               # High-level algorithm entry points
+    HoloRay/             # Main project
+      data/              # Test data (images / boundaries / configs, etc.)
+      KdTree/            # Third-party KD-tree implementation
+      Parser/            # Simple parsers and small utilities
+      Algo.h             # High-level algorithm entry points
       DataAnalysis.cpp
-      DataAnalysis.h       # Analysis / statistics helpers
-      FileProc.h           # File I/O helpers
-      HoloRay.cpp          # Main driver / entry point
+      DataAnalysis.h     # Analysis / numerical routines
+      FileProc.h         # File I/O helpers
+      HoloRay.cpp        # Main driver / entry point
       ImgProc.cpp
-      ImgProc.h            # Image / gradient processing helpers
+      ImgProc.h          # Image / gradient processing helpers
       stdafx.cpp
-      stdafx.h             # Precompiled header (VS2015)
-      targetver.h          # Platform setup
+      stdafx.h           # Precompiled header (VS2015)
+      targetver.h        # Platform setup
 
 The `data/` folder contains small test cases used for debugging and
 experiments.
@@ -38,24 +40,24 @@ experiments.
 
 ## 2. Requirements and build
 
-### Environment
+Environment:
 
-- IDE / compiler: **Microsoft Visual Studio 2015** (MSVC 14.x)  
-- Language: C++ (uses basic C++11 features)  
+- IDE / compiler: Microsoft Visual Studio 2015 (MSVC 14.x)
+- Language: C++ (uses basic C++11 features)
 - OS: Windows (tested on Windows 10)
 
-### Build steps
+Build steps:
 
 1. Clone the repository:
 
-       git clone https://github.com/<your-account>/<your-repo-name>.git
+       git clone https://github.com/monge-ampere/holoray-subpixel.git
 
 2. Open `HoloRay.sln` in **Visual Studio 2015**.
 
 3. Select configuration:
 
-   - `Release` for experiments / timing  
-   - `Debug` for development and inspection  
+   - `Release` for experiments / timing
+   - `Debug` for development / inspection
 
 4. Build the solution:
 
@@ -63,8 +65,8 @@ experiments.
 
 If compilation fails, please check:
 
-- Include path for `HoloRay/KdTree`  
-- Runtime library settings (`/MT` vs `/MD`)  
+- Include path for `HoloRay/KdTree`
+- Runtime library settings (`/MT` vs `/MD`)
 - C++ language standard settings (C++11 or later)
 
 ---
@@ -73,53 +75,103 @@ If compilation fails, please check:
 
 1. Prepare your inputs in `HoloRay/data/`:
 
-   - Test image(s)  
-   - Closed pixel-level boundary  
-   - Any additional files needed by your configuration  
-   - (Optional) precomputed auxiliary data (e.g. charts / maps)
+   - Grayscale test image(s)
+   - Closed pixel-level boundary (anchor contour)
+   - Precomputed **integration charts** (holomorphic (u, v) maps and related data),
+     defined on a narrow collar around the boundary
 
 2. Adjust file paths and parameters in:
 
-   - `HoloRay.cpp`  
-   - `Algo.h`  
-   - or related headers  
+   - `HoloRay.cpp`
+   - `Algo.h`
+   - and related headers
 
-   Typical settings include input file names, output file names,
-   and basic numerical parameters.
+   Typical settings include input file names, output file names, and basic
+   numeric parameters (e.g. gradient scale, per-ray search window).
 
-3. Build and run the `HoloRay` executable from Visual Studio
-   (or from the build output directory).
+3. Build and run the `HoloRay` executable from Visual Studio (or run the
+   compiled binary from the output directory).
 
-4. Output (depending on configuration) may include:
+4. Outputs (depending on configuration) may include:
 
-   - Refined subpixel boundary samples  
-   - Optional per-ray statistics / area estimates  
+   - Refined subpixel boundary samples (in image coordinates)
+   - Optional per-ray statistics / area estimates
 
-   Exact formats and file names can be checked in
-   `HoloRay.cpp` and `DataAnalysis.cpp`.
+   Exact formats and file names are defined in `HoloRay.cpp` and
+   `DataAnalysis.cpp`.
 
 ---
 
-## 4. Third-party code
+## 4. Holomorphic 1-form dependency (Gu–Yau / X. Gu)
 
-The `HoloRay/KdTree` directory contains a KD-tree implementation
-written by an external author. Please refer to the license / README
-inside `KdTree/` for details and licensing terms. It is used only as
-a search acceleration structure.
+HoloRay **does not implement** the holomorphic 1-form solver itself.
+
+- The pipeline assumes that you can provide precomputed holomorphic
+  integration charts (for example, inner and outer (u, v) coordinate maps
+  and their Jacobians) on a collar around the boundary.
+- In the author’s experiments, these charts are generated by code based on
+  the **Gu–Yau** holomorphic 1-form construction and related tools in
+  computational conformal geometry developed by **Prof. Xianfeng Gu**.
+
+Relevant resources (external, not part of this repository):
+
+- Prof. Xianfeng Gu’s page on computational conformal geometry and related
+  software:
+  
+      https://www3.cs.stonybrook.edu/~gu/
+
+Important notes:
+
+- The holomorphic 1-form / Gu–Yau implementation is **not** authored by the
+  HoloRay repository owner and is **not** redistributed here.
+- To run the full HoloRay pipeline, users must provide their own holomorphic
+  solver or integration chart generator (e.g. implemented by themselves or
+  adapted from existing public teaching code), and connect it via the
+  interfaces used in this project.
+- When using any external solver or code from Prof. Gu or others, please
+  carefully follow the original licenses and citation requirements.
+
+This repository therefore only open-sources the part **after** the
+holomorphic integration charts have been computed.
+
+---
+
+## 5. Third-party KD-tree code
+
+The `HoloRay/KdTree` directory contains a KD-tree implementation by
+**Matthew B. Kennel**, used to accelerate neighborhood queries for
+mapping and sampling.
+
+The original header comments (simplified) are:
+
+    (c) Matthew B. Kennel, Institute for Nonlinear Science, UCSD (2004)
+    Licensed under the Academic Free License version 1.1 found in file LICENSE
+    with additional provisions in that same file.
+    Implement a kd tree for fast searching of points in a fixed data base
+    in k-dimensional Euclidean space.
+
+Key points:
+
+- The KD-tree source and its `LICENSE` file are kept under `HoloRay/KdTree/`.
+- That component is licensed under **Academic Free License v1.1**, with
+  additional provisions in the same file.
+- It is used here strictly as a third-party search acceleration module.
 
 All other source files in this repository are covered by the license
-specified in the top-level `LICENSE` file (to be chosen by the
-repository owner, e.g. MIT / BSD / Apache-2.0).
+specified in the top-level `LICENSE` file (to be chosen by the repository
+owner, e.g. MIT / BSD / Apache-2.0).
 
 ---
 
-## 5. Citation and usage
 
-This code is a **research prototype**:
+## 6. Disclaimer
 
-- Only Visual Studio 2015 on Windows has been tested end-to-end.  
-- Interfaces and file formats may change as the project evolves.  
-- The focus is on clarity of the subpixel refinement pipeline,
-  not on production-grade optimization.
+This repository is a **research prototype**:
 
-Bug reports and pull requests are welcome.
+- Only Visual Studio 2015 on Windows has been tested end-to-end.
+- Interfaces and file formats may evolve as the method and implementation
+  are refined.
+- The emphasis is on clarity of the subpixel refinement pipeline rather than
+  on production-grade performance or robustness.
+
+Bug reports, comments, and pull requests are welcome.
