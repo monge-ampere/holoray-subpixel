@@ -122,15 +122,4 @@ This code is a **research prototype**:
 - The focus is on clarity of the subpixel refinement pipeline,
   not on production-grade optimization.
 
-If you use this repository in academic work, you may cite the
-associated paper (fill in once available), for example:
-
-    @article{HoloRay,
-      author  = {<Your Name>},
-      title   = {Holomorphic 1-Form and Subpixel Geometry for Image Analysis},
-      journal = {To appear},
-      year    = {20XX},
-      note    = {Preprint / submitted},
-    }
-
 Bug reports and pull requests are welcome.
